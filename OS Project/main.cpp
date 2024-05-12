@@ -23,132 +23,19 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+//My Header Files
+#include "SharedMemory.h"
+#include "Player.h"
+#include "Ghost.h"
+
 using namespace std;
 using namespace sf;
 
-struct SharedMemory
-{
-public:
-    int pacman_pos[2] = {23,14};
-    int pacman_direction = 0;
-    int score = 0;
-    bool window_open = true;
-    int paused = 0;
-    int game_state = -1;
-    bool game_win = false;
-    bool loading = false;
-    int level1[31][28] = {
-                            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-                            {1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-                            {1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1},
-                            {1,0,1,-1,-1,1,0,1,-1,-1,-1,1,0,1,1,0,1,-1,-1,-1,1,0,1,-1,-1,1,0,1},
-                            {1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1},
-                            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-                            {1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1},
-                            {1,0,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,0,1},
-                            {1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1},
-                            {1,1,1,1,1,1,0,1,1,1,1,1,-1,1,1,-1,1,1,1,1,1,0,1,1,1,1,1,1},
-                            {-1,-1,-1,-1,-1,1,0,1,1,1,1,1,-1,1,1,-1,1,1,1,1,1,0,1,-1,-1,-1,-1,-1},
-                            {-1,-1,-1,-1,-1,1,0,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,0,1,-1,-1,-1,-1,-1},
-                            {-1,-1,-1,-1,-1,1,0,1,1,-1,1,1,1,1,1,1,1,1,-1,1,1,0,1,-1,-1,-1,-1,-1},
-                            {1,1,1,1,1,1,0,1,1,-1,1,-1,-1,-1,-1,-1,-1,1,-1,1,1,0,1,1,1,1,1,1},
-                            {-2,-1,-1,-1,-1,-1,0,-1,-1,-1,1,-1,-1,-1,-1,-1,-1,1,-1,-1,-1,0,-1,-1,-1,-1,-1,-2},
-                            {1,1,1,1,1,1,0,1,1,-1,1,-1,-1,-1,-1,-1,-1,1,-1,1,1,0,1,1,1,1,1,1},
-                            {-1,-1,-1,-1,-1,1,0,1,1,-1,1,1,1,1,1,1,1,1,-1,1,1,0,1,-1,-1,-1,-1,-1},
-                            {-1,-1,-1,-1,-1,1,0,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,1,1,0,1,-1,-1,-1,-1,-1},
-                            {-1,-1,-1,-1,-1,1,0,1,1,-1,1,1,1,1,1,1,1,1,-1,1,1,0,1,-1,-1,-1,-1,-1},
-                            {1,1,1,1,1,1,0,1,1,-1,1,1,1,1,1,1,1,1,-1,1,1,0,1,1,1,1,1,1},
-                            {1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1},
-                            {1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1},
-                            {1,0,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1},
-                            {1,0,0,0,1,1,0,0,0,0,0,0,0,-1,-1,0,0,0,0,0,0,0,1,1,0,0,0,1},
-                            {1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1},
-                            {1,1,1,0,1,1,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,0,1,1,0,1,1,1},
-                            {1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,0,0,1},
-                            {1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1},
-                            {1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1},
-                            {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-                            {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}
-                         };
-};
-
-void pacman_move(int direction, int board[31][28], int* position)
-{
-    //Move Right
-    if (direction == 1)
-    {
-        if (board[position[0]+1][position[1]] != 1)
-            position[0] += 1;
-    }
-    //Move Left
-    if (direction == 2)
-    {
-        if (board[position[0]-1][position[1]] != 1)
-            position[0] -= 1;
-    }
-    //Move Down
-    if (direction == 3)
-    {
-        if (board[position[0]][position[1]+1] != 1)
-            position[1] += 1;
-    }
-    //Move Up
-    if (direction == 4)
-    {
-        if (board[position[0]][position[1]-1] != 1)
-            position[1] -= 1;
-    }
-
-    if (board[position[0]][position[1]] == -2)
-    {
-        if (position[1] >= 27)
-            position[1] = 0;
-        else if (position[1] <= 0)
-            position[1] = 27;
-    }
-}
-
-bool checkDirection(int* position, int board[31][28], int direction)
-{
-    //Move Right
-    if (direction == 1)
-    {
-        if (board[position[0]+1][position[1]] != 1)
-            return true;
-    }
-    //Move Left
-    if (direction == 2)
-    {
-        if (board[position[0]-1][position[1]] != 1)
-            return true;
-    }
-    //Move Down
-    if (direction == 3)
-    {
-        if (board[position[0]][position[1]+1] != 1)
-            return true;
-    }
-    //Move Up
-    if (direction == 4)
-    {
-        if (board[position[0]][position[1]-1] != 1)
-            return true;
-    }
-
-    return false;
-}
-
-void eatPellet(int* position, int board[31][28], int& score)
-{
-    if (board[position[0]][position[1]] == 0)
-    {
-        score += 1;
-        board[position[0]][position[1]] = -1;
-    }
-}
-
 bool checkWin(SharedMemory* shared)
 {
+    if (shared->lives == 0)
+        return true;
+
     for (int i = 0; i < 31; ++i)
     {
         for (int j = 0; j < 28; ++j)
@@ -157,54 +44,199 @@ bool checkWin(SharedMemory* shared)
                 return false;
         }
     }
+    shared->game_win = true;
     return true;
 }
 
-void PacManFunctionality(SharedMemory* shared, Clock& pacman_delay_time)
+bool checkCoins(SharedMemory* shared, GhostMemory* ghost1)
 {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
+    for (int i = 0; i < 31; ++i)
     {
-        if (shared->paused == 0)
-            shared->paused = 2;
-        // move left...
-        if (checkDirection(shared->pacman_pos, shared->level1, 2))
-            shared->pacman_direction = 2;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-    {
-        if (shared->paused == 0)
-            shared->paused = 2;
-        // move right...
-        if (checkDirection(shared->pacman_pos, shared->level1, 1))
-            shared->pacman_direction = 1;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-    {
-        if (shared->paused == 0)
-            shared->paused = 2;
-        // move right...
-        if (checkDirection(shared->pacman_pos, shared->level1, 4))
-            shared->pacman_direction = 4;
-    }
-    else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-    {
-        if (shared->paused == 0)
-            shared->paused = 2;
-        // move right...
-        if (checkDirection(shared->pacman_pos, shared->level1, 3))
-            shared->pacman_direction = 3;
-    }
-
-    float pacman_delay = pacman_delay_time.getElapsedTime().asMilliseconds();
-
-    if (shared->paused >= 2)
-    {
-        if (pacman_delay > 200)
+        for (int j = 0; j < 28; ++j)
         {
-            pacman_move(shared->pacman_direction, shared->level1, shared->pacman_pos);
-            pacman_delay_time.restart();
+            if (shared->level1[i][j] == 0)
+            {
+                return false;
+            }
         }
-        eatPellet(shared->pacman_pos, shared->level1, shared->score);
+    }
+    for (int i = 0; i < 31; ++i)
+    {
+        for (int j = 0; j < 28; ++j)
+        {
+            shared->level1[i][j] = ghost1->level1[i][j];
+        }
+    }
+    shared->pacman_pos[0] = 14;
+    shared->pacman_pos[1] = 21;
+    shared->poweredUp = false;
+    shared->pacman_direction = 0;
+    shared->ghost1_pos[0] = 13;
+    shared->ghost1_pos[1] = 14;
+    shared->ghost1_direction = 0;
+    shared->ghost2_pos[0] = 14;
+    shared->ghost2_pos[1] = 14;
+    shared->ghost2_direction = 0;
+    shared->ghost3_pos[0] = 15;
+    shared->ghost3_pos[1] = 14;
+    shared->ghost3_direction = 0;
+    shared->ghost4_pos[0] = 14;
+    shared->ghost4_pos[1] = 15;
+    shared->ghost4_direction = 0;
+    return true;
+}
+
+void UpdateGhostData(SharedMemory* shared, GhostMemory* ghost1,
+                     GhostMemory* ghost2, GhostMemory* ghost3, GhostMemory* ghost4)
+{
+    shared->ghost1_pos[0] = ghost1->ghost_pos[0];
+    shared->ghost1_pos[1] = ghost1->ghost_pos[1];
+    shared->ghost1_direction = ghost1->direction;
+
+    shared->ghost2_pos[0] = ghost2->ghost_pos[0];
+    shared->ghost2_pos[1] = ghost2->ghost_pos[1];
+    shared->ghost2_direction = ghost2->direction;
+
+    shared->ghost3_pos[0] = ghost3->ghost_pos[0];
+    shared->ghost3_pos[1] = ghost3->ghost_pos[1];
+    shared->ghost3_direction = ghost3->direction;
+
+    shared->ghost4_pos[0] = ghost4->ghost_pos[0];
+    shared->ghost4_pos[1] = ghost4->ghost_pos[1];
+    shared->ghost4_direction = ghost4->direction;
+
+    ghost1->pacman_pos[0] = shared->pacman_pos[0];
+    ghost1->pacman_pos[1] = shared->pacman_pos[1];
+
+    ghost2->pacman_pos[0] = shared->pacman_pos[0];
+    ghost2->pacman_pos[1] = shared->pacman_pos[1];
+
+    ghost3->pacman_pos[0] = shared->pacman_pos[0];
+    ghost3->pacman_pos[1] = shared->pacman_pos[1];
+
+    ghost4->pacman_pos[0] = shared->pacman_pos[0];
+    ghost4->pacman_pos[1] = shared->pacman_pos[1];
+
+    ghost1->window_open = shared->window_open;
+    ghost1->game_state = shared->game_state;
+    ghost1->game_win = shared->game_win;
+    ghost1->loading = shared->loading;
+    ghost1->paused = shared->paused;
+
+    ghost2->window_open = shared->window_open;
+    ghost2->game_state = shared->game_state;
+    ghost2->game_win = shared->game_win;
+    ghost2->loading = shared->loading;
+    ghost2->paused = shared->paused;
+
+    ghost3->window_open = shared->window_open;
+    ghost3->game_state = shared->game_state;
+    ghost3->game_win = shared->game_win;
+    ghost3->loading = shared->loading;
+    ghost3->paused = shared->paused;
+
+    ghost4->window_open = shared->window_open;
+    ghost4->game_state = shared->game_state;
+    ghost4->game_win = shared->game_win;
+    ghost4->loading = shared->loading;
+    ghost4->paused = shared->paused;
+}
+
+bool checkDeath(SharedMemory* shared, GhostMemory* ghost1,
+                GhostMemory* ghost2, GhostMemory* ghost3, GhostMemory* ghost4,
+                Sound& ghost_sound)
+{
+    if (ghost1->pacManDeath)
+    {
+        if (shared->poweredUp)
+        {
+            shared->score += 20;
+            ghost1->ghost_pos[0] = 14;
+            ghost1->ghost_pos[1] = 14;
+            ghost_sound.play();
+        }
+        else
+        {
+            shared->pacman_pos[0] = 14;
+            shared->pacman_pos[1] = 21;
+            shared->lives += -1;
+            return true;
+        }
+        ghost1->pacManDeath = false;
+    }
+    if (ghost2->pacManDeath)
+    {
+        if (shared->poweredUp)
+        {
+            shared->score += 20;
+            ghost2->ghost_pos[0] = 14;
+            ghost2->ghost_pos[1] = 14;
+            ghost_sound.play();
+        }
+        else
+        {
+            shared->pacman_pos[0] = 14;
+            shared->pacman_pos[1] = 21;
+            shared->lives += -1;
+            return true;
+        }
+        ghost2->pacManDeath = false;
+    }
+    if (ghost3->pacManDeath)
+    {
+        if (shared->poweredUp)
+        {
+            shared->score += 20;
+            ghost3->ghost_pos[0] = 14;
+            ghost3->ghost_pos[1] = 14;
+            ghost_sound.play();
+        }
+        else
+        {
+            shared->pacman_pos[0] = 14;
+            shared->pacman_pos[1] = 21;
+            shared->lives += -1;
+            return true;
+        }
+        ghost3->pacManDeath = false;
+    }
+    if (ghost4->pacManDeath)
+    {
+        if (shared->poweredUp)
+        {
+            shared->score += 20;
+            ghost4->ghost_pos[0] = 14;
+            ghost4->ghost_pos[1] = 14;
+            ghost_sound.play();
+        }
+        else
+        {
+            shared->pacman_pos[0] = 14;
+            shared->pacman_pos[1] = 21;
+            shared->lives += -1;
+            return true;
+        }
+        ghost4->pacManDeath = false;
+    }
+    return false;
+}
+
+void respawnPowerUps(SharedMemory* shared, Clock& timer)
+{
+    float time_check = timer.getElapsedTime().asSeconds();
+
+    if (time_check > 45)
+    {
+        for (int i = 0; i < 12; ++i)
+        {
+            if (shared->level1[shared->powerupPositions[i].positions[0]][shared->powerupPositions[i].positions[1]] != 2)
+            {
+                shared->level1[shared->powerupPositions[i].positions[0]][shared->powerupPositions[i].positions[1]] = 2;
+                timer.restart();
+                return;
+            }
+        }
+        timer.restart();
     }
 }
 
@@ -215,21 +247,284 @@ void* Engine_Thread(void* arg)
     Clock pacman_delay_time;
     pacman_delay_time.restart();
 
-    while (shared->window_open)
-    {
-        if (shared->game_state == 0 && shared->loading == false)
-        {
-            PacManFunctionality(shared, pacman_delay_time);
-        }
+    Clock power_time;
+    power_time.restart();
 
-        if (checkWin(shared))
+    GhostMemory* ghost1 = new GhostMemory;
+    ghost1->ghost_pos[0] = shared->ghost1_pos[0];
+    ghost1->ghost_pos[1] = shared->ghost1_pos[1];
+
+    GhostMemory* ghost2 = new GhostMemory;
+    ghost2->ghost_pos[0] = shared->ghost2_pos[0];
+    ghost2->ghost_pos[1] = shared->ghost2_pos[1];
+
+    GhostMemory* ghost3 = new GhostMemory;
+    ghost3->ghost_pos[0] = shared->ghost3_pos[0];
+    ghost3->ghost_pos[1] = shared->ghost3_pos[1];
+
+    GhostMemory* ghost4 = new GhostMemory;
+    ghost4->ghost_pos[0] = shared->ghost4_pos[0];
+    ghost4->ghost_pos[1] = shared->ghost4_pos[1];
+
+    SoundBuffer eat_buff;
+    Sound eat_sound;
+    eat_buff.loadFromFile("audio/pellet.wav");
+    eat_sound.setBuffer(eat_buff);
+    eat_sound.setVolume(40);
+
+    SoundBuffer power_buff;
+    Sound power_sound;
+    power_buff.loadFromFile("audio/powerup.wav");
+    power_sound.setBuffer(power_buff);
+    power_sound.setVolume(100);
+
+    SoundBuffer death_buff;
+    Sound death_sound;
+    death_buff.loadFromFile("audio/death.wav");
+    death_sound.setBuffer(death_buff);
+    death_sound.setVolume(100);
+
+    SoundBuffer ghost_buff;
+    Sound ghost_sound;
+    ghost_buff.loadFromFile("audio/ghost_death.wav");
+    ghost_sound.setBuffer(ghost_buff);
+    ghost_sound.setVolume(100);
+
+    for (int i = 0; i < 31; ++i)
+    {
+        for (int j = 0; j < 28; ++j)
         {
-            if (shared->game_win)
-                shared->game_state = 1;
-            else 
-                shared->game_state = 2;
+            shared->level1[i][j] = ghost1->level1[i][j];
         }
     }
+
+    pthread_t ghost1_t;
+    pthread_create( &ghost1_t, NULL, ghostFunctionality, (void*) ghost1);
+    pthread_t ghost2_t;
+    pthread_create( &ghost2_t, NULL, ghostFunctionality, (void*) ghost2);
+    pthread_t ghost3_t;
+    pthread_create( &ghost3_t, NULL, ghostFunctionality, (void*) ghost3);
+    pthread_t ghost4_t;
+    pthread_create( &ghost4_t, NULL, ghostFunctionality, (void*) ghost4);
+
+    Clock death_timer;
+    death_timer.restart();
+
+    Clock powerup_timer;
+    powerup_timer.restart();
+
+    while (shared->window_open)
+    {
+        if (shared->paused == 0)
+        {
+            sleep(3);
+            shared->paused = 2;
+        }
+        if (shared->paused == -2)
+        {
+            sleep(3);
+            shared->paused = 2;
+        }
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
+        {
+            shared->paused = 1;
+            ghost1->paused = 1;
+            ghost2->paused = 1;
+            ghost3->paused = 1;
+            ghost4->paused = 1;
+        }
+        else if (sf::Keyboard::isKeyPressed(sf::Keyboard::R))
+        {
+            shared->paused = 2;
+            ghost1->paused = 2;
+            ghost2->paused = 2;
+            ghost3->paused = 2;
+            ghost4->paused = 2;
+        }
+
+        if (shared->paused >= 2)
+        {
+            if (shared->game_state == 0 && shared->loading == false)
+            {
+                //pthread_mutex_lock(&movement_mutex);
+                PacManFunctionality(shared, pacman_delay_time, power_time, eat_sound, power_sound);
+                respawnPowerUps(shared, powerup_timer);
+                //pthread_mutex_unlock(&movement_mutex);
+            }
+
+            float death_delay = death_timer.getElapsedTime().asSeconds();
+
+            if (death_delay > 5)
+            {
+                if (checkDeath(shared, ghost1, ghost2, ghost3, ghost4, ghost_sound))
+                {
+                    death_sound.play();
+                    shared->pacman_direction = 0;
+                    shared->paused = -2;
+                    death_timer.restart();
+                }
+            }
+
+            pthread_mutex_lock(&movement_mutex);
+            UpdateGhostData(shared, ghost1, ghost2, ghost3, ghost4);
+            pthread_mutex_unlock(&movement_mutex);
+
+            if (checkWin(shared))
+            {
+                if (shared->game_win)
+                    shared->game_state = 1;
+                else 
+                    shared->game_state = 2;
+
+                pthread_cancel(ghost1_t);
+                pthread_cancel(ghost2_t);
+                pthread_cancel(ghost3_t);
+                pthread_cancel(ghost4_t);
+                return NULL;
+            }
+            if (checkCoins(shared, ghost1))
+            {
+                shared->pacman_speed -= 10;
+                ghost1->ghost_delay -= 10;
+                ghost2->ghost_delay -= 10;
+                ghost3->ghost_delay -= 10;
+                ghost4->ghost_delay -= 10;
+
+                ghost1->ghost_pos[0] = shared->ghost1_pos[0];
+                ghost1->ghost_pos[1] = shared->ghost1_pos[1];
+                ghost2->ghost_pos[0] = shared->ghost2_pos[0];
+                ghost2->ghost_pos[1] = shared->ghost2_pos[1];
+                ghost3->ghost_pos[0] = shared->ghost3_pos[0];
+                ghost3->ghost_pos[1] = shared->ghost3_pos[1];
+                ghost4->ghost_pos[0] = shared->ghost4_pos[0];
+                ghost4->ghost_pos[1] = shared->ghost4_pos[1];
+                
+                shared->paused = -2;
+                ghost1->paused = -2;
+                ghost2->paused = -2;
+                ghost3->paused = -2;
+                ghost4->paused = -2;
+            }
+        }
+    }
+}
+
+void resetGame(SharedMemory* shared)
+{
+    shared->pacman_pos[0] = 14;
+    shared->pacman_pos[1] = 21;
+    shared->poweredUp = false;
+    shared->pacman_direction = 0;
+    shared->lives = 3;
+
+    shared->ghost1_pos[0] = 13;
+    shared->ghost1_pos[1] = 14;
+    shared->ghost1_direction = 0;
+    shared->ghost2_pos[0] = 14;
+    shared->ghost2_pos[1] = 14;
+    shared->ghost2_direction = 0;
+    shared->ghost3_pos[0] = 15;
+    shared->ghost3_pos[1] = 14;
+    shared->ghost3_direction = 0;
+    shared->ghost4_pos[0] = 14;
+    shared->ghost4_pos[1] = 15;
+    shared->ghost4_direction = 0;
+
+    shared->score = 0;
+    shared->window_open = true;
+    shared->paused = 0;
+    shared->game_state = -1;
+    shared->game_win = false;
+    shared->loading = false;
+}
+
+void printGhosts(SharedMemory* shared, RenderWindow &window,
+                 Sprite& ghost, Texture left, Texture right,
+                 Texture weak1, Texture weak2, int ghost_num,
+                 Clock& ghost_animation, int direction, int& state)
+{
+    if (shared->poweredUp)
+    {
+        float ghost_time = ghost_animation.getElapsedTime().asMilliseconds();
+
+        if (ghost_time > 300)
+        {
+            state = 1 + (state % 2);
+            ghost_animation.restart();
+        }
+
+        if (state == 1)
+            ghost.setTexture(weak1);
+        else
+            ghost.setTexture(weak2);
+    }
+    else
+    {
+        ghost.setTexture(left);
+
+        if (direction == 1)
+            ghost.setTexture(left);
+        else if (direction == 2)
+            ghost.setTexture(right);
+    }
+
+    if (ghost_num == 1)
+        ghost.setPosition(shared->ghost1_pos[0]*25, shared->ghost1_pos[1]*25 - 5);
+    else if (ghost_num == 2)
+        ghost.setPosition(shared->ghost2_pos[0]*25, shared->ghost2_pos[1]*25 - 5);
+    else if (ghost_num == 3)
+        ghost.setPosition(shared->ghost3_pos[0]*25, shared->ghost3_pos[1]*25 - 5);
+    else if (ghost_num == 4)
+        ghost.setPosition(shared->ghost4_pos[0]*25, shared->ghost4_pos[1]*25 - 5);
+
+    
+    window.draw(ghost);
+}
+
+void printPacMan(SharedMemory* shared, RenderWindow &window, 
+                Sprite& pacman, 
+                Texture pacman_tex1, Texture pacman_tex2, Texture pacman_tex3,
+                Texture pacman_tex4, Texture pacman_tex5, Texture pacman_tex6,
+                Texture pacman_tex7, Texture pacman_tex8, Texture pacman_tex9,
+                Texture pacman_tex10, Texture pacman_tex11, Texture pacman_tex12,
+                int& pac_state, Clock& pacman_animation)
+{
+    float pac_time = pacman_animation.getElapsedTime().asMilliseconds();
+
+    if (pac_time > 100)
+    {
+        pac_state += 1;
+        pac_state = 1 + (pac_state % 12);
+        pacman_animation.restart();
+    }
+
+    if (pac_state == 1)
+        pacman.setTexture(pacman_tex1);
+    else if (pac_state == 2)
+        pacman.setTexture(pacman_tex2);
+    else if (pac_state == 3)
+        pacman.setTexture(pacman_tex3);
+    else if (pac_state == 4)
+        pacman.setTexture(pacman_tex4);
+    else if (pac_state == 5)
+        pacman.setTexture(pacman_tex5);
+    else if (pac_state == 6)
+        pacman.setTexture(pacman_tex6);
+    else if (pac_state == 7)
+        pacman.setTexture(pacman_tex7);
+    else if (pac_state == 8)
+        pacman.setTexture(pacman_tex8);
+    else if (pac_state == 9)
+        pacman.setTexture(pacman_tex9);
+    else if (pac_state == 10)
+        pacman.setTexture(pacman_tex10);
+    else if (pac_state == 11)
+        pacman.setTexture(pacman_tex11);
+    else if (pac_state == 12)
+        pacman.setTexture(pacman_tex12);
+            
+    pacman.setPosition(shared->pacman_pos[0]*25, shared->pacman_pos[1]*25 - 5);
+    window.draw(pacman);
 }
 
 void game_UI(SharedMemory* shared, RenderWindow &window)
@@ -252,51 +547,126 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
     score_num.setCharacterSize(35);
     score_num.setFillColor(sf::Color::White);
 
+    Sprite lives;
+    Texture lives_tex;
+    lives_tex.loadFromFile("images/lives.png");
+    lives.setTexture(lives_tex);
+    lives.setScale(0.1,0.1);
+
+    Sprite paused;
+    Texture pause_tex;
+    pause_tex.loadFromFile("images/menu/pause.png");
+    paused.setTexture(pause_tex);
+
+    Sprite mazer;
+    Texture mazer_tex;
+
+    mazer_tex.loadFromFile("images/mazer1.png");
+    mazer.setTexture(mazer_tex);
+
     Sprite portal;
     Texture portal_tex;
+    Sprite grass;
+    Texture grass_tex;
     Sprite wall;
     Texture wall_tex;
     Sprite pellet;
     Texture pellet_tex;
+    Sprite PowerUp;
+    Texture power_tex;
     Sprite background;
     Texture back_tex;
-    Sprite pacman;
-    Texture pacman_texRight1, pacman_texRight2, pacman_texRight3;
-    Texture pacman_texLeft1, pacman_texLeft2, pacman_texLeft3;
-    Texture pacman_texUp1, pacman_texUp2, pacman_texUp3;
-    Texture pacman_texDown1, pacman_texDown2, pacman_texDown3;
 
-    portal_tex.loadFromFile("images/Portal.png");
-    back_tex.loadFromFile("images/background.jpg");
-    wall_tex.loadFromFile("images/brick1.png");
+    Sprite pacman;
+    Texture pacman_tex1, pacman_tex2, pacman_tex3;
+    Texture pacman_tex4, pacman_tex5, pacman_tex6;
+    Texture pacman_tex7, pacman_tex8, pacman_tex9;
+    Texture pacman_tex10, pacman_tex11, pacman_tex12;
+
+    Sprite ghost1, ghost2, ghost3, ghost4;
+    Texture ghost1_righttex, ghost2_righttex, ghost3_righttex, ghost4_righttex;
+    Texture ghost1_lefttex, ghost2_lefttex, ghost3_lefttex, ghost4_lefttex;
+    Texture weak_ghost1, weak_ghost2;
+
+    portal_tex.loadFromFile("images/portal.png");
+    back_tex.loadFromFile("images/background.png");
+    grass_tex.loadFromFile("images/grass.png");
+    wall_tex.loadFromFile("images/brick3.png");
     pellet_tex.loadFromFile("images/pellet.png");
-    pacman_texRight1.loadFromFile("images/pacman/pacmanRight/pacman1.jpg");
-    pacman_texRight2.loadFromFile("images/pacman/pacmanRight/pacman2.jpg");
-    pacman_texRight3.loadFromFile("images/pacman/pacmanRight/pacman3.jpg");
-    pacman_texLeft1.loadFromFile("images/pacman/pacmanLeft/pacman1.jpg");
-    pacman_texLeft2.loadFromFile("images/pacman/pacmanLeft/pacman2.jpg");
-    pacman_texLeft3.loadFromFile("images/pacman/pacmanLeft/pacman3.jpg");
-    pacman_texUp1.loadFromFile("images/pacman/pacmanUp/pacman1.jpg");
-    pacman_texUp2.loadFromFile("images/pacman/pacmanUp/pacman2.jpg");
-    pacman_texUp3.loadFromFile("images/pacman/pacmanUp/pacman3.jpg");
-    pacman_texDown1.loadFromFile("images/pacman/pacmanUp/pacman1.jpg");
-    pacman_texDown2.loadFromFile("images/pacman/pacmanDown/pacman2.jpg");
-    pacman_texDown3.loadFromFile("images/pacman/pacmanDown/pacman3.jpg");
+    power_tex.loadFromFile("images/bacon.png");
+
+    pacman_tex1.loadFromFile("images/pacman/1.png");
+    pacman_tex2.loadFromFile("images/pacman/2.png");
+    pacman_tex3.loadFromFile("images/pacman/3.png");
+    pacman_tex4.loadFromFile("images/pacman/4.png");
+    pacman_tex5.loadFromFile("images/pacman/5.png");
+    pacman_tex6.loadFromFile("images/pacman/6.png");
+    pacman_tex7.loadFromFile("images/pacman/7.png");
+    pacman_tex8.loadFromFile("images/pacman/8.png");
+    pacman_tex9.loadFromFile("images/pacman/9.png");
+    pacman_tex10.loadFromFile("images/pacman/10.png");
+    pacman_tex11.loadFromFile("images/pacman/11.png");
+    pacman_tex12.loadFromFile("images/pacman/12.png");
+
+    ghost1_righttex.loadFromFile("images/ghost/ghost1/ghost1right.png");
+    ghost1_lefttex.loadFromFile("images/ghost/ghost1/ghost1left.png");
+
+    ghost2_righttex.loadFromFile("images/ghost/ghost2/ghost2right.png");
+    ghost2_lefttex.loadFromFile("images/ghost/ghost2/ghost2left.png");
+
+    ghost3_righttex.loadFromFile("images/ghost/ghost3/ghost3right.png");
+    ghost3_lefttex.loadFromFile("images/ghost/ghost3/ghost3left.png");
+
+    ghost4_righttex.loadFromFile("images/ghost/ghost4/ghost4right.png");
+    ghost4_lefttex.loadFromFile("images/ghost/ghost4/ghost4left.png");
+
+    weak_ghost1.loadFromFile("images/ghost/weak1.png");
+    weak_ghost2.loadFromFile("images/ghost/weak2.png");
 
     portal.setTexture(portal_tex);
     portal.setScale(0.5,0.5);
+    grass.setTexture(grass_tex);
+    grass.setScale(0.5,0.5);
     background.setTexture(back_tex);
     background.setScale(1,1);
     wall.setTexture(wall_tex);
     wall.setScale(0.5,0.5);
     pellet.setTexture(pellet_tex);
-    pellet.setScale(1,1);
-    pacman.setTexture(pacman_texRight1);
-    pacman.setScale(0.14,0.14);
+    pellet.setScale(0.5,0.5);
+    PowerUp.setTexture(power_tex);
+    PowerUp.setScale(0.5,0.5);
+
+    pacman.setTexture(pacman_tex1);
+    pacman.setScale(0.45,0.45);
+
+    ghost1.setTexture(ghost1_lefttex);
+    ghost1.setScale(0.5,0.5);
+    ghost2.setTexture(ghost2_lefttex);
+    ghost2.setScale(0.5,0.5);
+    ghost3.setTexture(ghost3_lefttex);
+    ghost3.setScale(0.5,0.5);
+    ghost4.setTexture(ghost4_lefttex);
+    ghost4.setScale(0.5,0.5);
 
     Clock pacman_animation;
     pacman_animation.restart();
     int pac_state = 1;
+
+    Clock ghost1_animation;
+    ghost1_animation.restart();
+    int ghost1_state = 1;
+
+    Clock ghost2_animation;
+    ghost2_animation.restart();
+    int ghost2_state = 1;
+
+    Clock ghost3_animation;
+    ghost3_animation.restart();
+    int ghost3_state = 1;
+
+    Clock ghost4_animation;
+    ghost4_animation.restart();
+    int ghost4_state = 1;
 
     while (window.isOpen())
     {
@@ -313,52 +683,6 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
 
         window.draw(background);
 
-        float pac_time = pacman_animation.getElapsedTime().asMilliseconds();
-
-        if (pac_time > 150)
-        {
-            pac_state += 1;
-            pac_state = 1 + (pac_state%3);
-            pacman_animation.restart();
-        }
-
-        if (pac_state == 1)
-        {
-            if (shared->pacman_direction == 1)
-                pacman.setTexture(pacman_texRight1);
-            else if (shared->pacman_direction == 2)
-                pacman.setTexture(pacman_texLeft1);
-            else if (shared->pacman_direction == 3)
-                pacman.setTexture(pacman_texDown1);
-            else if (shared->pacman_direction == 4)
-                pacman.setTexture(pacman_texUp1);
-        }
-        else if (pac_state == 2)
-        {
-            if (shared->pacman_direction == 1)
-                pacman.setTexture(pacman_texRight2);
-            else if (shared->pacman_direction == 2)
-                pacman.setTexture(pacman_texLeft2);
-            else if (shared->pacman_direction == 3)
-                pacman.setTexture(pacman_texDown2);
-            else if (shared->pacman_direction == 4)
-                pacman.setTexture(pacman_texUp2);
-        }
-        else if (pac_state == 3)
-        {
-            if (shared->pacman_direction == 1)
-                pacman.setTexture(pacman_texRight3);
-            else if (shared->pacman_direction == 2)
-                pacman.setTexture(pacman_texLeft3);
-            else if (shared->pacman_direction == 3)
-                pacman.setTexture(pacman_texDown3);
-            else if (shared->pacman_direction == 4)
-                pacman.setTexture(pacman_texUp3);
-        }
-
-        pacman.setPosition(2 + shared->pacman_pos[0]*25, 2 + shared->pacman_pos[1]*25);
-
-        window.draw(pacman);
         for (int i = 0; i < 31; ++i)
         {
             for (int j = 0; j < 28; ++j)
@@ -370,20 +694,68 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
                 }
                 else if (shared->level1[i][j] == 0)
                 {
-                    pellet.setPosition(10 + i*25, 10 + j*25);
+                    pellet.setPosition(i*25, j*25);
                     window.draw(pellet);
+                }
+                else if (shared->level1[i][j] == 2)
+                {
+                    PowerUp.setPosition(i*25, j*25);
+                    window.draw(PowerUp);
                 }
                 else if (shared->level1[i][j] == -2)
                 {
                     portal.setPosition(i*25,j*25);
                     window.draw(portal);
                 }
+                else if (shared->level1[i][j] == -1)
+                {
+                    grass.setPosition(i*25,j*25);
+                    window.draw(grass);
+                }
             }
         }
+
+        window.draw(mazer);
+
+        printPacMan(shared, window, pacman, 
+                    pacman_tex1, pacman_tex2, pacman_tex3,
+                    pacman_tex4, pacman_tex5, pacman_tex6,
+                    pacman_tex7, pacman_tex8, pacman_tex9,
+                    pacman_tex10, pacman_tex11, pacman_tex12,
+                    pac_state, pacman_animation);
+
+        printGhosts(shared, window, ghost1,
+                     ghost1_lefttex, ghost1_righttex,
+                     weak_ghost1, weak_ghost2, 1, ghost1_animation,
+                     shared->ghost1_direction, ghost1_state);
+        printGhosts(shared, window, ghost2,
+                     ghost2_lefttex, ghost2_righttex,
+                     weak_ghost1, weak_ghost2, 2, ghost2_animation,
+                     shared->ghost2_direction, ghost2_state);
+        printGhosts(shared, window, ghost3,
+                     ghost3_lefttex, ghost3_righttex,
+                     weak_ghost1, weak_ghost2, 3, ghost3_animation,
+                     shared->ghost3_direction, ghost3_state);
+        printGhosts(shared, window, ghost4,
+                     ghost4_lefttex, ghost4_righttex,
+                     weak_ghost1, weak_ghost2, 4, ghost4_animation,
+                     shared->ghost4_direction, ghost4_state);
+
         score_text.setString("Score: \n");
         score_num.setString(to_string(shared->score));
         window.draw(score_text);
         window.draw(score_num);
+
+        for (int i = 0; i < shared->lives; ++i)
+        {
+            lives.setPosition(800 + i * 20, 60);
+            window.draw(lives);
+        }
+
+        if (shared->paused == 1)
+        {
+            window.draw(paused);
+        }
 
         if (shared->game_state != 0)
             return;
@@ -398,12 +770,13 @@ void menu_UI(SharedMemory* shared, RenderWindow &window)
 
     Texture menu_bg1, menu_bg2, menu_bg3, credits;
 
-    menu_bg1.loadFromFile("images/menu/main_menu/menu1.png");
-    menu_bg2.loadFromFile("images/menu/main_menu/menu2.png");
-    menu_bg3.loadFromFile("images/menu/main_menu/menu3.png");
-    credits.loadFromFile("images/menu/credits.png");
+    menu_bg1.loadFromFile("images/menu/main_menu/menu11.png");
+    menu_bg2.loadFromFile("images/menu/main_menu/menu22.png");
+    menu_bg3.loadFromFile("images/menu/main_menu/menu33.png");
+    credits.loadFromFile("images/menu/credits1.png");
 
     int menu_state = 0;
+    background.setTexture(menu_bg1);
 
     while(window.isOpen())
     {
@@ -419,7 +792,7 @@ void menu_UI(SharedMemory* shared, RenderWindow &window)
             }
             else if (event.type == sf::Event::KeyReleased)
             {
-                if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::Right)
+                if (event.key.code == sf::Keyboard::Up || event.key.code == sf::Keyboard::Down)
                 {
                     if (menu_state == 0)
                         menu_state = 1;
@@ -522,15 +895,156 @@ void LoadingScreen(bool &state_loading, RenderWindow &window)
         window.draw(loading);
 
         window.display();
-    } while (timer.getElapsedTime().asSeconds() < 5);
+    } while (timer.getElapsedTime().asSeconds() < 1);
 
     state_loading = false;
+}
+
+void GameOver(SharedMemory* shared, RenderWindow &window)
+{
+    Sprite background;
+
+    Texture win1, win2, loss1, loss2;
+
+    sf::Font font1, font2;
+    font1.loadFromFile("fonts/font1.ttf");
+    font2.loadFromFile("fonts/font3.otf");
+
+    sf::Text score_text;
+    score_text.setFont(font2);
+    score_text.setString("Score: " + to_string(shared->score));
+    score_text.setPosition(100, 340);
+    score_text.setCharacterSize(45);
+    score_text.setFillColor(sf::Color::White);
+
+    sf::Text score_num;
+    score_num.setFont(font2);
+    score_num.setString(to_string(shared->score));
+    score_num.setPosition(150, 390);
+    score_num.setCharacterSize(45);
+    score_num.setFillColor(sf::Color::White);
+
+    win1.loadFromFile("images/menu/win11.png");
+    win2.loadFromFile("images/menu/win22.png");
+    loss1.loadFromFile("images/menu/loss11.png");
+    loss2.loadFromFile("images/menu/loss22.png");
+
+    int menu_state = 1;
+    if (shared->game_win)
+        background.setTexture(win1);
+    else
+        background.setTexture(loss1);
+
+    window.draw(background);
+
+    while(window.isOpen())
+    {
+        Event event;
+        while (window.pollEvent(event))
+        {
+
+            // Request for closing the window
+            if (event.type == sf::Event::Closed)
+            {
+                shared->window_open = false;
+                window.close();
+            }
+            else if (event.type == sf::Event::KeyReleased)
+            {
+                if (event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::Right)
+                {
+                    if (menu_state == 1)
+                        menu_state = 2;
+                    else if (menu_state == 2)
+                        menu_state = 1;
+                }
+                else if (event.key.code == sf::Keyboard::Enter)
+                {
+                    if (menu_state == 1)
+                    {
+                        resetGame(shared);
+                        window.clear();
+                        shared->game_state = 0;
+                        return;
+                    }
+                    else if (menu_state == 2)
+                    {
+                        shared->window_open = false;
+                        window.close();
+                        return;
+                    }
+                }
+            }
+
+            if (shared->game_win)
+            {
+                if (menu_state == 1)
+                {
+                    background.setTexture(win1); 
+                }
+                else if (menu_state == 2)
+                {
+                    background.setTexture(win2);
+                }
+            }
+            else
+            {
+                if (menu_state == 1)
+                {
+                    background.setTexture(loss1); 
+                }
+                else if (menu_state == 2)
+                {
+                    background.setTexture(loss2);
+                }
+            }
+
+            window.clear();
+            window.draw(background);
+            score_text.setString("Score: \n");
+            score_num.setString(to_string(shared->score));
+            window.draw(score_text);
+            window.draw(score_num);
+
+            window.display();
+        }
+    }
+}
+
+void SavePowerPositions(SharedMemory* shared)
+{
+    int index = 0;
+    for (int i = 0; i < 31; ++i)
+    {
+        for (int j = 0; j < 28; ++j)
+        {
+            if (shared->level1[i][j] == 2)
+            {
+                shared->powerupPositions[index].positions[0] = i;
+                shared->powerupPositions[index].positions[1] = j;
+                index += 1;
+            }
+        }
+    }
 }
 
 void* UI_Thread(void* arg)
 {
     SharedMemory* shared = (SharedMemory*) arg;
     string title = "Game UI";
+    pthread_t tid1;
+
+    SavePowerPositions(shared);
+
+    SoundBuffer music_buff;
+    Sound music_sound;
+    music_buff.loadFromFile("audio/music.wav");
+    music_sound.setBuffer(music_buff);
+    music_sound.setVolume(40);
+
+    music_sound.play();
+    music_sound.setLoop(true);
+    music_sound.setVolume(60);
 
     RenderWindow window(VideoMode(1000,800), title);
 
@@ -555,10 +1069,16 @@ void* UI_Thread(void* arg)
             {
                 window.clear();
                 LoadingScreen(shared->loading, window);
+                pthread_create( &tid1, NULL, Engine_Thread, (void*)shared);
                 game_UI(shared, window);
             }
-
-            window.clear();
+            if (shared->game_state == 1 || 2)
+            {
+                window.clear();
+                pthread_cancel(tid1);
+                LoadingScreen(shared->loading, window);
+                GameOver(shared, window);
+            }
             window.display();
         }
     }
@@ -572,8 +1092,6 @@ int main()
 
     SharedMemory* shared = new SharedMemory;
 
-    pthread_t tid1;
-    pthread_create( &tid1, NULL, Engine_Thread, (void*)shared);
     pthread_t tid2;
     pthread_create( &tid2, NULL, UI_Thread, (void*)shared);
     
