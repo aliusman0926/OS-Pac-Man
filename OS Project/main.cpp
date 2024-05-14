@@ -22,6 +22,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <semaphore.h>
 
 //My Header Files
 #include "SharedMemory.h"
@@ -30,6 +31,210 @@
 
 using namespace std;
 using namespace sf;
+
+void setPermitsandKeys(SharedMemory* shared)
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        if (shared->keys[i].positions[0] == -1 || shared->keys[i].positions[1] == -1)
+        {
+            int x;
+            int y;
+
+            bool taken = false;
+            do {
+                taken = false;
+                x = 13 + rand()%3;
+                y = 11 + rand()%6;
+                for (int i = 0; i < 2; ++i)
+                {
+                    if (shared->permits[i].positions[0] == x && shared->permits[i].positions[0] == y)
+                    {
+                        taken = true;
+                        break;
+                    }
+                    else if (shared->keys[i].positions[0] == x && shared->keys[i].positions[0] == y)
+                    {
+                        taken = true;
+                        break;
+                    }
+                }
+            } while (taken == true);
+            shared->keys[i].positions[0] = x;
+            shared->keys[i].positions[1] = y;
+        }
+        if (shared->permits[i].positions[0] == -1 || shared->permits[i].positions[1] == -1)
+        {
+            int x;
+            int y;
+
+            bool taken = false;
+            do {
+                taken = false;
+                x = 13 + rand()%3;
+                y = 11 + rand()%6;
+                for (int i = 0; i < 2; ++i)
+                {
+                    if (shared->permits[i].positions[0] == x && shared->permits[i].positions[0] == y)
+                    {
+                        taken = true;
+                        break;
+                    }
+                    if (shared->keys[i].positions[0] == x && shared->keys[i].positions[0] == y)
+                    {
+                        taken = true;
+                        break;
+                    }
+                }
+            } while (taken == true);
+            shared->permits[i].positions[0] = x;
+            shared->permits[i].positions[1] = y;
+        }
+    }
+    return;
+}
+
+void setNewKeys(SharedMemory* shared)
+{
+    int key_count = 0;
+    int permit_count = 0;
+    for (int i = 0; i < 2; ++i)
+    {
+        if (key_count < 1)
+        {
+            if (shared->keys[i].positions[0] == -1 || shared->keys[i].positions[1] == -1)
+            {
+                int x;
+                int y;
+
+                bool taken = false;
+                do {
+                    taken = false;
+                    x = 13 + rand()%3;
+                    y = 11 + rand()%6;
+                    for (int i = 0; i < 2; ++i)
+                    {
+                        if (shared->permits[i].positions[0] == x && shared->permits[i].positions[0] == y)
+                        {
+                            taken = true;
+                            break;
+                        }
+                        else if (shared->keys[i].positions[0] == x && shared->keys[i].positions[0] == y)
+                        {
+                            taken = true;
+                            break;
+                        }
+                    }
+                } while (taken == true);
+                shared->keys[i].positions[0] = x;
+                shared->keys[i].positions[1] = y;
+                key_count += 1; 
+            }
+        }
+        if (permit_count < 1)
+        {
+            if (shared->permits[i].positions[0] == -1 || shared->permits[i].positions[1] == -1)
+            {
+                int x;
+                int y;
+
+                bool taken = false;
+                do {
+                    taken = false;
+                    x = 13 + rand()%3;
+                    y = 11 + rand()%6;
+                    for (int i = 0; i < 2; ++i)
+                    {
+                        if (shared->permits[i].positions[0] == x && shared->permits[i].positions[0] == y)
+                        {
+                            taken = true;
+                            break;
+                        }
+                        if (shared->keys[i].positions[0] == x && shared->keys[i].positions[0] == y)
+                        {
+                            taken = true;
+                            break;
+                        }
+                    }
+                } while (taken == true);
+                shared->permits[i].positions[0] = x;
+                shared->permits[i].positions[1] = y;
+                permit_count += 1;
+            }
+        }
+    }
+    return;
+}
+
+void savePermitPositions(SharedMemory* shared, int level1[31][28])
+{
+    for (int i = 0; i < 2; ++i)
+    {
+        level1[shared->permits[i].positions[0]][shared->permits[i].positions[1]] = 4;
+        level1[shared->keys[i].positions[0]][shared->keys[i].positions[1]] = 5;
+    }
+}
+
+void checkKey(SharedMemory* shared, GhostMemory* ghost_mem)
+{
+    if (ghost_mem->key == false)
+    {
+        if (shared->level1[ghost_mem->ghost_pos[0]][ghost_mem->ghost_pos[1]] == 4)
+        {
+            shared->level1[ghost_mem->ghost_pos[0]][ghost_mem->ghost_pos[1]] = -1;
+            for (int i = 0; i < 2; ++i)
+            {
+                if (shared->keys[i].positions[0] == ghost_mem->ghost_pos[0]
+                   && shared->keys[i].positions[1] == ghost_mem->ghost_pos[1])
+                {
+                    shared->keys[i].positions[0] = -1;
+                    shared->keys[i].positions[1] = -1;
+                }
+            }
+            ghost_mem->key = true;
+        }
+    }
+}
+
+void checkPermit(SharedMemory* shared, GhostMemory* ghost_mem)
+{
+    if (ghost_mem->permit == false)
+    {
+        if (ghost_mem->key == true)
+        {
+            if (shared->level1[ghost_mem->ghost_pos[0]][ghost_mem->ghost_pos[1]] == 5)
+            {
+                shared->level1[ghost_mem->ghost_pos[0]][ghost_mem->ghost_pos[1]] = -1;
+                for (int i = 0; i < 2; ++i)
+                {
+                    if (shared->permits[i].positions[0] == ghost_mem->ghost_pos[0]
+                       && shared->permits[i].positions[1] == ghost_mem->ghost_pos[1])
+                    {
+                        shared->permits[i].positions[0] = -1;
+                        shared->permits[i].positions[1] = -1;
+                    }
+                }
+                ghost_mem->permit = true;
+            }
+        }
+    }
+}
+
+void freePermitsKeys(SharedMemory* shared, GhostMemory* ghost_mem)
+{
+    if (ghost_mem->key == true && ghost_mem->permit == true)
+    {
+        if (ghost_mem->ghost_pos[1] == 9)
+        {
+            ghost_mem->key = false;
+            ghost_mem->permit = false;
+            ghost_mem->left_box = true;
+            setNewKeys(shared);
+            savePermitPositions(shared, shared->level1);
+            savePermitPositions(shared, ghost_mem->level1);
+        }
+    }
+}
 
 bool checkWin(SharedMemory* shared)
 {
@@ -146,10 +351,15 @@ bool checkDeath(SharedMemory* shared, GhostMemory* ghost1,
                 GhostMemory* ghost2, GhostMemory* ghost3, GhostMemory* ghost4,
                 Sound& ghost_sound)
 {
+
     if (ghost1->pacManDeath)
     {
         if (shared->poweredUp)
         {
+            if (ghost1->boost == true)
+                releaseBoost(ghost1);
+
+            ghost1->left_box = false;
             shared->score += 20;
             ghost1->ghost_pos[0] = 14;
             ghost1->ghost_pos[1] = 14;
@@ -168,6 +378,10 @@ bool checkDeath(SharedMemory* shared, GhostMemory* ghost1,
     {
         if (shared->poweredUp)
         {
+            if (ghost2->boost == true)
+                releaseBoost(ghost2);
+            
+            ghost2->left_box = false;
             shared->score += 20;
             ghost2->ghost_pos[0] = 14;
             ghost2->ghost_pos[1] = 14;
@@ -186,6 +400,10 @@ bool checkDeath(SharedMemory* shared, GhostMemory* ghost1,
     {
         if (shared->poweredUp)
         {
+            if (ghost3->boost == true)
+                releaseBoost(ghost3);
+            
+            ghost3->left_box = false;
             shared->score += 20;
             ghost3->ghost_pos[0] = 14;
             ghost3->ghost_pos[1] = 14;
@@ -204,6 +422,10 @@ bool checkDeath(SharedMemory* shared, GhostMemory* ghost1,
     {
         if (shared->poweredUp)
         {
+            if (ghost4->boost == true)
+                releaseBoost(ghost4);
+              
+            ghost4->left_box = false;
             shared->score += 20;
             ghost4->ghost_pos[0] = 14;
             ghost4->ghost_pos[1] = 14;
@@ -218,6 +440,7 @@ bool checkDeath(SharedMemory* shared, GhostMemory* ghost1,
         }
         ghost4->pacManDeath = false;
     }
+
     return false;
 }
 
@@ -253,18 +476,22 @@ void* Engine_Thread(void* arg)
     GhostMemory* ghost1 = new GhostMemory;
     ghost1->ghost_pos[0] = shared->ghost1_pos[0];
     ghost1->ghost_pos[1] = shared->ghost1_pos[1];
+    savePermitPositions(shared, ghost1->level1);
 
     GhostMemory* ghost2 = new GhostMemory;
     ghost2->ghost_pos[0] = shared->ghost2_pos[0];
     ghost2->ghost_pos[1] = shared->ghost2_pos[1];
+    savePermitPositions(shared, ghost2->level1);
 
     GhostMemory* ghost3 = new GhostMemory;
     ghost3->ghost_pos[0] = shared->ghost3_pos[0];
     ghost3->ghost_pos[1] = shared->ghost3_pos[1];
+    savePermitPositions(shared, ghost3->level1);
 
     GhostMemory* ghost4 = new GhostMemory;
     ghost4->ghost_pos[0] = shared->ghost4_pos[0];
     ghost4->ghost_pos[1] = shared->ghost4_pos[1];
+    savePermitPositions(shared, ghost4->level1);
 
     SoundBuffer eat_buff;
     Sound eat_sound;
@@ -367,6 +594,23 @@ void* Engine_Thread(void* arg)
 
             pthread_mutex_lock(&movement_mutex);
             UpdateGhostData(shared, ghost1, ghost2, ghost3, ghost4);
+
+            checkKey(shared, ghost1);
+            checkPermit(shared, ghost1);
+            freePermitsKeys(shared, ghost1);
+
+            checkKey(shared, ghost2);
+            checkPermit(shared, ghost2);
+            freePermitsKeys(shared, ghost2);
+
+            checkKey(shared, ghost3);
+            checkPermit(shared, ghost3);
+            freePermitsKeys(shared, ghost3);
+
+            checkKey(shared, ghost4);
+            checkPermit(shared, ghost4);
+            freePermitsKeys(shared, ghost4);
+
             pthread_mutex_unlock(&movement_mutex);
 
             if (checkWin(shared))
@@ -522,7 +766,14 @@ void printPacMan(SharedMemory* shared, RenderWindow &window,
         pacman.setTexture(pacman_tex11);
     else if (pac_state == 12)
         pacman.setTexture(pacman_tex12);
-            
+        
+    Vector2f offset;
+    offset.x = shared->pacman_pos[0] - (pacman.getPosition().x - 2)/25;
+    offset.y = shared->pacman_pos[1] - ((pacman.getPosition().y + 5)/25);
+
+
+    //pacman.move(offset.x * 3, offset.y * 3);
+    
     pacman.setPosition(shared->pacman_pos[0]*25, shared->pacman_pos[1]*25 - 5);
     window.draw(pacman);
 }
@@ -564,6 +815,12 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
     mazer_tex.loadFromFile("images/mazer1.png");
     mazer.setTexture(mazer_tex);
 
+    Sprite key;
+    Texture key_tex;
+    Sprite permit;
+    Texture permit_tex;
+    Sprite ghost_wall;
+    Texture ghost_wall_tex;
     Sprite portal;
     Texture portal_tex;
     Sprite grass;
@@ -594,6 +851,9 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
     wall_tex.loadFromFile("images/brick3.png");
     pellet_tex.loadFromFile("images/pellet.png");
     power_tex.loadFromFile("images/bacon.png");
+    ghost_wall_tex.loadFromFile("images/ghostwall.png");
+    key_tex.loadFromFile("images/key.png");
+    permit_tex.loadFromFile("images/permit.png");
 
     pacman_tex1.loadFromFile("images/pacman/1.png");
     pacman_tex2.loadFromFile("images/pacman/2.png");
@@ -635,6 +895,12 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
     pellet.setScale(0.5,0.5);
     PowerUp.setTexture(power_tex);
     PowerUp.setScale(0.5,0.5);
+    ghost_wall.setTexture(ghost_wall_tex);
+    ghost_wall.setScale(0.5,0.5);
+    key.setTexture(key_tex);
+    key.setScale(0.5,0.5);
+    permit.setTexture(permit_tex);
+    permit.setScale(0.5,0.5);
 
     pacman.setTexture(pacman_tex1);
     pacman.setScale(0.45,0.45);
@@ -667,6 +933,8 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
     Clock ghost4_animation;
     ghost4_animation.restart();
     int ghost4_state = 1;
+
+    pacman.setPosition(shared->pacman_pos[0]*25,shared->pacman_pos[1]*25 - 5);
 
     while (window.isOpen())
     {
@@ -701,6 +969,21 @@ void game_UI(SharedMemory* shared, RenderWindow &window)
                 {
                     PowerUp.setPosition(i*25, j*25);
                     window.draw(PowerUp);
+                }
+                else if (shared->level1[i][j] == 3)
+                {
+                    ghost_wall.setPosition(i*25, j*25);
+                    window.draw(ghost_wall);
+                }
+                else if (shared->level1[i][j] == 4)
+                {
+                    key.setPosition(i*25, j*25);
+                    window.draw(key);
+                }
+                else if (shared->level1[i][j] == 5)
+                {
+                    permit.setPosition(i*25, j*25);
+                    window.draw(permit);
                 }
                 else if (shared->level1[i][j] == -2)
                 {
@@ -1034,6 +1317,16 @@ void* UI_Thread(void* arg)
     string title = "Game UI";
     pthread_t tid1;
 
+    for (int i = 0; i < 2; ++i)
+    {
+        shared->permits[i].positions[0] = -1;
+        shared->permits[i].positions[1] = -1;
+        shared->keys[i].positions[0] = -1;
+        shared->keys[i].positions[1] = -1;
+    }
+
+    setPermitsandKeys(shared);
+    savePermitPositions(shared, shared->level1);
     SavePowerPositions(shared);
 
     SoundBuffer music_buff;
@@ -1089,6 +1382,8 @@ void* UI_Thread(void* arg)
 int main()
 {
     XInitThreads();
+    sem_init(&key, 0, 1);
+    sem_init(&key, 0, 1);
 
     SharedMemory* shared = new SharedMemory;
 

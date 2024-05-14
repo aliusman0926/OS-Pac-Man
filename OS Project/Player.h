@@ -37,25 +37,25 @@ void pacman_move(int direction, int board[31][28], int* position)
     //Move Right
     if (direction == 1)
     {
-        if (board[position[0]+1][position[1]] != 1)
+        if (board[position[0]+1][position[1]] != 1 && board[position[0]+1][position[1]] != 3)
             position[0] += 1;
     }
     //Move Left
     if (direction == 2)
     {
-        if (board[position[0]-1][position[1]] != 1)
+        if (board[position[0]-1][position[1]] != 1 && board[position[0]-1][position[1]] != 3)
             position[0] -= 1;
     }
     //Move Down
     if (direction == 3)
     {
-        if (board[position[0]][position[1]+1] != 1)
+        if (board[position[0]][position[1]+1] != 1 && board[position[0]][position[1]+1] != 3)
             position[1] += 1;
     }
     //Move Up
     if (direction == 4)
     {
-        if (board[position[0]][position[1]-1] != 1)
+        if (board[position[0]][position[1]-1] != 1 && board[position[0]][position[1]-1] != 1)
             position[1] -= 1;
     }
 
