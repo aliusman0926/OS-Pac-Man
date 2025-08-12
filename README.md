@@ -25,6 +25,10 @@ Welcome to the Multithreaded Pacman Game repository! This project is a classic P
 - Eat PowerUps to be able to eat ghosts for extra points.
 - Eat all dots to win the game.
 
+## Demo
+[Video Demo.webm](https://github.com/user-attachments/assets/4f7b49b3-20fa-41a2-b8ea-8aee672b2e6e)
+
+
 ## Credits
 
 - Developed by Ali Usman(https://github.com/aliusman0926)
